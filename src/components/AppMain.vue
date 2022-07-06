@@ -3,7 +3,7 @@
     <v-app-bar height="48" color="deep-purple accent-4">
       <button-icon iconName="mdi-note-plus" @click="openFile" />
       <button-icon iconName="mdi-content-save" @click="saveFile" />
-      <button-icon iconName="mdi-reload" @click="test"/>
+      <button-icon iconName="mdi-reload" />
       <button-icon iconName="mdi-content-cut" />
       <button-icon iconName="mdi-content-copy" />
       <button-icon iconName="mdi-content-paste" />
@@ -24,10 +24,7 @@
 <script>
 import ButtonIcon from "./ButtonIcon";
 import TinyMce from "./editor/TextEditor.vue";
-import { open } from "@tauri-apps/api/dialog";
-import { save } from "@tauri-apps/api/dialog";
-//import { BaseDirectory, writeTextFile} from '@tauri-apps/api/fs';
-import { documentDir } from '@tauri-apps/api/path';
+import { open, save } from "@tauri-apps/api/dialog";
 import { invoke } from '@tauri-apps/api/tauri'
 
 export default {
@@ -57,37 +54,40 @@ export default {
           },
         ],
       }).then((selected) => {
-        console.log("selected file", selected);
+        
+        console.log("Selected file", selected);
+        invoke('read_file', { path: selected}).
+           then(content=> {
+             this.activeEditor.commands.setContent(content);
+             });
+        this.activeEditor.file = selected;
       });
     },
     saveFile() {
-      invoke('save_file', { path: '/home/andy/Documents/tauri-test/app.txt', 
-                            content: this.activeEditor.getHTML()}).
-          then(stat=> console.log(stat))
-      
-      var a = 1;
-      if(a ==1){
+      var path = this.activeEditor.file;
+      if (path){
+        this.saveToDisk(path);
         return
       }
 
-
-      save({ multiple: false }).then((savePath) => {
-        console.log("save path", savePath);
-        if(savePath){
-          var indexOFlastSlash = savePath.lastIndexOf("/");
-          var  fileName = savePath.substring(indexOFlastSlash+1);
-          var directory = savePath.substring(0, indexOFlastSlash);
-          console.log('file name', fileName, directory);
-          invoke('save_file', { path: savePath, content: JSON.stringify(this.activeEditor.getJSON())}).
-          then(stat=> console.log(stat))
-          //writeTextFile(fileName, this.activeEditor.getJSON(), { dir: BaseDirectory.Document });
-        }
-        
+      save({
+        filters: [
+          {
+            name: "text",
+            extensions: ["txt"]
+          },
+        ]
+      }).then((selected) => {
+        this.saveToDisk(selected)
       });
+      
+      
     },
-    test(){
-      documentDir().then(path=> console.log('doc dir ', path));
-    },
+    saveToDisk(path){
+      invoke('save_file', { path: path, 
+                            content: this.activeEditor.getHTML()}).
+          then(stat=> console.log(stat))
+    }
   },
 };
 </script>
