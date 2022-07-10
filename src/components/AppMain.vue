@@ -1,16 +1,17 @@
 <template>
-  <div>
-    <v-app-bar height="48" color="deep-purple accent-4">
-      <button-icon iconName="mdi-note-plus" @click="openFile" />
-      <button-icon iconName="mdi-content-save" @click="saveFile" />
-      <button-icon iconName="mdi-reload" />
-      <button-icon iconName="mdi-content-cut" />
-      <button-icon iconName="mdi-content-copy" />
-      <button-icon iconName="mdi-content-paste" />
-      <button-icon iconName="mdi-lock" />
+  <v-app>
+    <v-app-bar height="48" color="grey lighten-5" app>
+      <button-icon title="New" iconName="mdi-note-plus" />
+      <button-icon title="Open" iconName="mdi-folder-open" @click="openFile" />
+      <button-icon title="Import" iconName="mdi-file-import" @click="importFile"/>
+      <button-icon title="Save" iconName="mdi-content-save" @click="saveFile" />
+      <button-icon title="Cut" iconName="mdi-content-cut" />
+      <button-icon title="Copy" iconName="mdi-content-copy" />
+      <button-icon title="Paste" iconName="mdi-content-paste" />
+      <button-icon title="Secure" iconName="mdi-lock" />
       <v-divider vertical class="spacer"></v-divider>
       <button-icon
-        iconName="mdi-format-bold"
+        iconName="mdi-format-bold" 
         toggleBtn="true"
         @click="toggleBold"
       />
@@ -18,14 +19,15 @@
     <v-main>
       <tiny-mce @editorMounted="editorMounted" />
     </v-main>
-  </div>
+  </v-app>
 </template>
 
 <script>
 import ButtonIcon from "./ButtonIcon";
 import TinyMce from "./editor/TextEditor.vue";
 import { open, save } from "@tauri-apps/api/dialog";
-import { invoke } from '@tauri-apps/api/tauri'
+import { invoke } from "@tauri-apps/api/tauri";
+import { parseTextAsHtml } from "../js/util";
 
 export default {
   components: {
@@ -49,45 +51,59 @@ export default {
         multiple: false,
         filters: [
           {
-            name: "text",
+            name: "Secure Text",
+            extensions: ["stxt"],
+          },
+        ],
+      }).then((selected) => {
+        invoke("read_file", { path: selected }).then((content) => {
+          this.activeEditor.commands.setContent(content);
+        });
+        this.activeEditor.file = selected;
+      });
+    },
+    importFile() {
+      open({
+        multiple: false,
+        filters: [
+          {
+            name: "Text",
             extensions: ["txt"],
           },
         ],
       }).then((selected) => {
-        
-        console.log("Selected file", selected);
-        invoke('read_file', { path: selected}).
-           then(content=> {
-             this.activeEditor.commands.setContent(content);
-             });
+        invoke("read_file", { path: selected }).then((content) => {
+          console.log('text ', content);
+          console.log('parsed html ', parseTextAsHtml(content));
+          this.activeEditor.commands.setContent(parseTextAsHtml(content));
+        });
         this.activeEditor.file = selected;
       });
     },
     saveFile() {
       var path = this.activeEditor.file;
-      if (path){
+      if (path) {
         this.saveToDisk(path);
-        return
+        return;
       }
 
       save({
         filters: [
           {
-            name: "text",
-            extensions: ["txt"]
+            name: "Secure Text",
+            extensions: ["stxt"],
           },
-        ]
+        ],
       }).then((selected) => {
-        this.saveToDisk(selected)
+        this.saveToDisk(selected);
       });
-      
-      
     },
-    saveToDisk(path){
-      invoke('save_file', { path: path, 
-                            content: this.activeEditor.getHTML()}).
-          then(stat=> console.log(stat))
-    }
+    saveToDisk(path) {
+      invoke("save_file", {
+        path: path,
+        content: this.activeEditor.getHTML(),
+      }).then((stat) => console.log(stat));
+    },
   },
 };
 </script>
