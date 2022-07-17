@@ -6,6 +6,7 @@
 
  <script>
 import { Editor, EditorContent, Extension } from "@tiptap/vue-2";
+import { DynaPass } from '../../plugins/dynapass'
 import StarterKit from "@tiptap/starter-kit";
 
 export default {
@@ -19,10 +20,10 @@ export default {
     };
   },
   mounted() {
-    var self = this;
+    let self = this;
 
     //Will be changed in future. Will override Regular Enter.
-    var CustomHardBreak = Extension.create({
+    let CustomHardBreak = Extension.create({
           priority: 10001,
           name: 'NewLine',
           addKeyboardShortcuts() {
@@ -38,7 +39,8 @@ export default {
       content: "<p>I’m running Tiptap with Vue.js. 🎉</p>",
       extensions: [
         StarterKit,
-        CustomHardBreak
+        CustomHardBreak,
+        DynaPass
       ]
         
     });

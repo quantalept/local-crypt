@@ -37,9 +37,10 @@ fn save_file(path: String, content: String) -> Result<String, String> {
 #[tauri::command]
 fn read_file(path: String) -> String {
 
-  let contents = fs::read_to_string(path)
-        .expect("Something went wrong reading the file");
-  contents
+  match fs::read_to_string(path){
+    Ok(content) => content,
+    Err(_err) => return String::from("Error opening file")
+  }
 
 }
 
