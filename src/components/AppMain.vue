@@ -42,6 +42,7 @@ export default {
     return {
       activeEditor: null,
       keyLoaded: false,
+      testNum: 0,
     };
   },
   methods: {
@@ -129,6 +130,11 @@ export default {
     },
     switchNode(){
       console.log('Switch node called');
+      let plainTxt = this.activeEditor.view.state.selection.content().toJSON().content[0].content[0].text;
+      this.activeEditor.commands.setPassword(plainTxt);
+      
+            
+      //this.activeEditor.commands.insertSmartButton();
     }
 
   },

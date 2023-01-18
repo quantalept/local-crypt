@@ -7,6 +7,7 @@
  <script>
 import { Editor, EditorContent, Extension } from "@tiptap/vue-2";
 import { DynaPass } from '../../plugins/dynapass'
+import { DynaPassNode } from '../../plugins/dynapass-helper.js'
 import StarterKit from "@tiptap/starter-kit";
 
 export default {
@@ -40,7 +41,8 @@ export default {
       extensions: [
         StarterKit,
         CustomHardBreak,
-        DynaPass
+        DynaPass,
+        DynaPassNode,
       ]
         
     });
