@@ -1,12 +1,13 @@
-import { mergeAttributes, Node } from '@tiptap/core';
+import { mergeAttributes, Node, Mark } from '@tiptap/core';
 import { VueNodeViewRenderer } from '@tiptap/vue-2';
 import DynapassView from '../components/editor/DynapassView.vue'
 
-export const DynaPass = Node.create({
-  name: 'dynapass',
+export const DynaPassNode = Node.create({
+  name: 'dynapassview',
 
   priority: 1001,
   atom: false,
+  inline: false,
   group: 'block',
   content: 'text*',
 
@@ -26,30 +27,25 @@ export const DynaPass = Node.create({
 
   parseHTML() {
     return [
-      { tag: 'dynapass' },
+      { tag: 'dynapassview' },
     ]
   },
 
   renderHTML({ HTMLAttributes }) {
-    return ['div', mergeAttributes(this.options.HTMLAttributes, HTMLAttributes), 0]
+    return ['dynapassview', mergeAttributes(this.options.HTMLAttributes, HTMLAttributes), 0]
   },
 
   addCommands() {
     return {
-      setPassword: (text) => ({ commands }) => {
-        var content = [{
-          type: "dynapassview",
-          content: [
-            {
-              type: 'text',
-              text: '***********',
-            }
-          ]
-        }];
-        return commands.insertContent(content);
+      setPasswordView: () => ({ commands }) => {
+        return commands.setNode(this.name)
       },
     }
   },
+  addNodeView() {
+    return VueNodeViewRenderer(DynapassView);
+  },
+
   addKeyboardShortcuts() {
     return {
       'Alt-p': () => this.editor.commands.setPassword(),

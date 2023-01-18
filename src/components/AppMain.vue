@@ -8,7 +8,9 @@
       <button-icon title="Cut" iconName="mdi-content-cut" />
       <button-icon title="Copy" iconName="mdi-content-copy" />
       <button-icon title="Paste" iconName="mdi-content-paste" />
-      <button-icon title="Secure" iconName="mdi-lock" />
+      <button-icon title="Secure" iconName="mdi-lock" @click="unlock"/>
+      <button-icon title="Reveal" iconName="mdi-eye" @click="revealOrHide"/>
+      <v-btn color="success" @click="switchNode">try node</v-btn>
       <v-divider vertical class="spacer"></v-divider>
       <button-icon
         iconName="mdi-format-bold" 
@@ -28,6 +30,8 @@ import TinyMce from "./editor/TextEditor.vue";
 import { open, save } from "@tauri-apps/api/dialog";
 import { invoke } from "@tauri-apps/api/tauri";
 import { parseTextAsHtml } from "../js/util";
+import { encryptText, decryptText, loadKeys } from "../js/security"
+import log from 'node-forge/lib/log';
 
 export default {
   components: {
@@ -37,6 +41,8 @@ export default {
   data() {
     return {
       activeEditor: null,
+      keyLoaded: false,
+      testNum: 0,
     };
   },
   methods: {
@@ -73,7 +79,6 @@ export default {
         ],
       }).then((selected) => {
         invoke("read_file", { path: selected }).then((content) => {
-          console.log('text ', content);
           console.log('parsed html ', parseTextAsHtml(content));
           this.activeEditor.commands.setContent(parseTextAsHtml(content));
         });
@@ -81,7 +86,7 @@ export default {
       });
     },
     saveFile() {
-      var path = this.activeEditor.file;
+      let path = this.activeEditor.file;
       if (path) {
         this.saveToDisk(path);
         return;
@@ -104,6 +109,34 @@ export default {
         content: this.activeEditor.getHTML(),
       }).then((stat) => console.log(stat));
     },
+    unlock(){
+      if(!this.keyLoaded){
+        loadKeys();
+      }
+    },
+    revealOrHide(){
+      //https://github.com/ueberdosis/tiptap/issues/369
+      let encrypted = false;
+      if (encrypted){
+        let encryptedTxt = this.activeEditor.view.state.selection;
+        let decryptedTxt = decryptText(encryptedTxt);
+        console.log('decrypted text', decryptedTxt);
+      }else{
+        //Needs better way to fetch the data
+        let plainTxt = this.activeEditor.view.state.selection.content().toJSON().content[0].content[0].text;
+        let encTxt = encryptText('plainTxt')
+        console.log('encrypted text', plainTxt, encTxt);
+      }
+    },
+    switchNode(){
+      console.log('Switch node called');
+      let plainTxt = this.activeEditor.view.state.selection.content().toJSON().content[0].content[0].text;
+      this.activeEditor.commands.setPassword(plainTxt);
+      
+            
+      //this.activeEditor.commands.insertSmartButton();
+    }
+
   },
 };
 </script>
